@@ -1,6 +1,7 @@
 import yaml
 import csv
 import math
+import numpy as np
 
 def parse_number(value, line_no, column_name):
     if value is None or value.strip() == "":
@@ -156,6 +157,20 @@ try:
     print("mean_x =", mean_x)
     print("mean_y =", mean_y)
     print("r =", r)
+
+    numpy_r = float(np.corrcoef(xs, ys)[0, 1])
+    print("NumPy r =", numpy_r)
+
+
+
+    if math.isfinite(r) and math.isfinite(numpy_r):
+        difference = abs(r - numpy_r)
+        print("绝对误差 =", difference)
+        print("精度检查：", "通过" if difference <= 1e-6 else "未通过")
+    else:
+        print("精度检查：结果中有非有限数值，无法比较")
+
+
 except ValueError as error:  
     print("错误：", error)
     raise SystemExit(1)    #错误输出
