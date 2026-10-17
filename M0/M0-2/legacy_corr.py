@@ -23,66 +23,6 @@ def parse_number(value, line_no, column_name):
 
     return number  #处理行号和列名，防止乱七八糟的值来当
 
-
-
-CONFIG_PATH = "config.yaml"#读取配置文件
-
-try:
-    with open(CONFIG_PATH) as f:
-        cfg = yaml.safe_load(f)
-except FileNotFoundError:
-    print("错误：找不到配置文件：", CONFIG_PATH)   #处理配置文件不存在
-    raise SystemExit(1)
-
-except yaml.YAMLError:
-    print("错误：配置文件的 YAML 格式不正确，请检查缩进和冒号")  #格式错误或文件为空
-    raise SystemExit(1)
-
-if cfg is None:
-    print("错误：配置文件为空，或只有注释") #继续处理空文件is None
-    raise SystemExit(1)
-
-try:
-    csv_path = cfg["input_csv"]
-    col_x = cfg["columns"]["x"]
-    col_y = cfg["columns"]["y"]
-except KeyError as error:
-    print("错误：配置文件缺少配置项：", error)
-    raise SystemExit(1)
-
-xs = []
-ys = []
-
-try:
-    with open(csv_path) as f:
-        reader = csv.DictReader(f)
-
-        if not reader.fieldnames:
-            raise ValueError("CSV 文件为空，或没有表头")
-
-        if col_x not in reader.fieldnames:
-            raise KeyError(col_x)
-
-        if col_y not in reader.fieldnames:
-            raise KeyError(col_y)
-
-        for row in reader:
-            line_no = reader.line_num
-            xs.append(parse_number(row[col_x], line_no, col_x))  #调用定义的读数据函数
-            ys.append(parse_number(row[col_y], line_no, col_y))
-            
-except FileNotFoundError:
-    print("错误：找不到 CSV 文件：", csv_path) #文件不存在
-    raise SystemExit(1)  
-except KeyError as error:
-    print("错误：CSV 中找不到列：", error) #缺列
-    raise SystemExit(1)
-except ValueError as error:
-    print("错误：", error)
-    raise SystemExit(1)
-
-
-
 def calculate_correlation(xs, ys):
     n = len(xs)
 
@@ -150,27 +90,90 @@ def calculate_correlation(xs, ys):
 
     return n, mean_x, mean_y, r
 
-try:
-    n, mean_x, mean_y, r = calculate_correlation(xs, ys)
 
-    print("n =", n)
-    print("mean_x =", mean_x)
-    print("mean_y =", mean_y)
-    print("r =", r)
+def main():
+    CONFIG_PATH = "config.yaml"#读取配置文件
 
-    numpy_r = float(np.corrcoef(xs, ys)[0, 1])
-    print("NumPy r =", numpy_r)
+    try:
+        with open(CONFIG_PATH) as f:
+            cfg = yaml.safe_load(f)
+    except FileNotFoundError:
+        print("错误：找不到配置文件：", CONFIG_PATH)   #处理配置文件不存在
+        raise SystemExit(1)
+
+    except yaml.YAMLError:
+        print("错误：配置文件的 YAML 格式不正确，请检查缩进和冒号")  #格式错误或文件为空
+        raise SystemExit(1)
+
+    if cfg is None:
+        print("错误：配置文件为空，或只有注释") #继续处理空文件is None
+        raise SystemExit(1)
+
+    try:
+        csv_path = cfg["input_csv"]
+        col_x = cfg["columns"]["x"]
+        col_y = cfg["columns"]["y"]
+    except KeyError as error:
+        print("错误：配置文件缺少配置项：", error)
+        raise SystemExit(1)
+
+    xs = []
+    ys = []
+
+    try:
+        with open(csv_path) as f:
+            reader = csv.DictReader(f)
+
+            if not reader.fieldnames:
+                raise ValueError("CSV 文件为空，或没有表头")
+
+            if col_x not in reader.fieldnames:
+                raise KeyError(col_x)
+
+            if col_y not in reader.fieldnames:
+                raise KeyError(col_y)
+
+            for row in reader:
+                line_no = reader.line_num
+                xs.append(parse_number(row[col_x], line_no, col_x))  #调用定义的读数据函数
+                ys.append(parse_number(row[col_y], line_no, col_y))
+                
+    except FileNotFoundError:
+        print("错误：找不到 CSV 文件：", csv_path) #文件不存在
+        raise SystemExit(1)  
+    except KeyError as error:
+        print("错误：CSV 中找不到列：", error) #缺列
+        raise SystemExit(1)
+    except ValueError as error:
+        print("错误：", error)
+        raise SystemExit(1)
 
 
 
-    if math.isfinite(r) and math.isfinite(numpy_r):
-        difference = abs(r - numpy_r)
-        print("绝对误差 =", difference)
-        print("精度检查：", "通过" if difference <= 1e-6 else "未通过")
-    else:
-        print("精度检查：结果中有非有限数值，无法比较")
+
+    try:
+        n, mean_x, mean_y, r = calculate_correlation(xs, ys)
+
+        print("n =", n)
+        print("mean_x =", mean_x)
+        print("mean_y =", mean_y)
+        print("r =", r)
+
+        numpy_r = float(np.corrcoef(xs, ys)[0, 1])
+        print("NumPy r =", numpy_r)
 
 
-except ValueError as error:  
-    print("错误：", error)
-    raise SystemExit(1)    #错误输出
+
+        if math.isfinite(r) and math.isfinite(numpy_r):
+            difference = abs(r - numpy_r)
+            print("绝对误差 =", difference)
+            print("精度检查：", "通过" if difference <= 1e-6 else "未通过")
+        else:
+            print("精度检查：结果中有非有限数值，无法比较")
+
+
+    except ValueError as error:  
+        print("错误：", error)
+        raise SystemExit(1)    #错误输出
+if __name__ == "__main__": 
+    main()                
