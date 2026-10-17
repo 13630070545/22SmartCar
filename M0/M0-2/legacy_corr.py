@@ -18,11 +18,10 @@ with open(csv_path) as f:
     reader = csv.DictReader(f)
     for row in reader:
         xs.append(float(row[col_x]))
-        ys.append(float(row[col_y]))  
+        ys.append(float(row[col_y]))  #读取数据
 
-n = len(xs)    #以上为读取数据模块
 
-def calculate_correlation(xs,ys,);
+def calculate_correlation(xs,ys):
     n = len(xs)
     sum_x = 0.0
     sum_y = 0.0
@@ -46,7 +45,8 @@ def calculate_correlation(xs,ys,);
 
     denom = math.sqrt(dx * dy)  #原式忘记开方
     r = prod / denom
-    return r
+    return n ,mean_x,mean_y, r
+n, mean_x, mean_y, r = calculate_correlation(xs, ys)
 
 print("n =", n)
 print("mean_x =", mean_x)
