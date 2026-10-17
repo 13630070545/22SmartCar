@@ -41,9 +41,13 @@ if cfg is None:
     print("错误：配置文件为空，或只有注释") #继续处理空文件is None
     raise SystemExit(1)
 
-csv_path = cfg["input_csv"]
-col_x = cfg["columns"]["x"]
-col_y = cfg["columns"]["y"]
+try:
+    csv_path = cfg["input_csv"]
+    col_x = cfg["columns"]["x"]
+    col_y = cfg["columns"]["y"]
+except KeyError as error:
+    print("错误：配置文件缺少配置项：", error)
+    raise SystemExit(1)
 
 xs = []
 ys = []
@@ -65,8 +69,6 @@ try:
             line_no = reader.line_num
             xs.append(parse_number(row[col_x], line_no, col_x))  #调用定义的读数据函数
             ys.append(parse_number(row[col_y], line_no, col_y))
-
-        for row in reader:
             line_no = reader.line_num
             xs.append(parse_number(row[col_x], line_no, col_x))
             ys.append(parse_number(row[col_y], line_no, col_y))
@@ -92,6 +94,15 @@ def calculate_correlation(xs,ys):
     if n < 2:
         raise ValueError("计算相关系数至少需要两组数据")
 
+    scale_x = max(abs(x) for x in xs) #求缩放值，利用等比例缩放保证数值不会过大或过小
+    scale_y = max(abs(y) for y in ys)
+
+    if scale_x == 0 or scale_y == 0:
+        raise ValueError("某一列全部为零，无法计算相关系数")
+
+    xs = [x / scale_x for x in xs]
+    ys = [y / scale_y for y in ys]
+
     sum_x = 0.0
     sum_y = 0.0
     for i in range(n):
@@ -111,12 +122,10 @@ def calculate_correlation(xs,ys):
         dx = dx + a * a    
         dy = dy + b * b
         prod = prod + a * b  #分子
-    if dx == 0 or dy == 0:
-        raise ValueError("某一列的值全部相同，无法计算相关系数")
-
-    denom = math.sqrt(dx * dy)  #原式忘记开方
+    
+    denom = math.sqrt(dx) * math.sqrt(dy)  #分开开根号，避免中间过程值过大
     r = prod / denom
-    return n ,mean_x,mean_y, r
+    return n, mean_x * scale_x, mean_y * scale_y, r  #还原大小
 
 
 try:
