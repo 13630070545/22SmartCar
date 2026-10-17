@@ -69,10 +69,7 @@ try:
             line_no = reader.line_num
             xs.append(parse_number(row[col_x], line_no, col_x))  #调用定义的读数据函数
             ys.append(parse_number(row[col_y], line_no, col_y))
-            line_no = reader.line_num
-            xs.append(parse_number(row[col_x], line_no, col_x))
-            ys.append(parse_number(row[col_y], line_no, col_y))
-
+            
 except FileNotFoundError:
     print("错误：找不到 CSV 文件：", csv_path) #文件不存在
     raise SystemExit(1)  
@@ -85,7 +82,7 @@ except ValueError as error:
 
 
 
-def calculate_correlation(xs,ys):
+def calculate_correlation(xs, ys):
     n = len(xs)
 
     if n != len(ys):
@@ -94,39 +91,63 @@ def calculate_correlation(xs,ys):
     if n < 2:
         raise ValueError("计算相关系数至少需要两组数据")
 
-    scale_x = max(abs(x) for x in xs) #求缩放值，利用等比例缩放保证数值不会过大或过小
-    scale_y = max(abs(y) for y in ys)
+    if not all(math.isfinite(x) for x in xs):
+        raise ValueError("第一列包含非有限数值")
+
+    if not all(math.isfinite(y) for y in ys):
+        raise ValueError("第二列包含非有限数值")
+
+   
+    offset_x = xs[0]
+    offset_y = ys[0] #用首项作为参考
+
+    shifted_x = [x - offset_x for x in xs] #平移， 留下有差异的部分，放大数据间的差异（对数据差异小的数据有效果）
+    shifted_y = [y - offset_y for y in ys]
+
+    # 正负极大值相减可能溢出，此时放弃该列的平移
+    if not all(math.isfinite(x) for x in shifted_x): #检查平移后的数值是否有限，平移后溢出将直接缩放
+        offset_x = 0.0
+        shifted_x = xs[:]
+
+    if not all(math.isfinite(y) for y in shifted_y):
+        offset_y = 0.0
+        shifted_y = ys[:]
+
+    
+    scale_x = max(abs(x) for x in shifted_x)
+    scale_y = max(abs(y) for y in shifted_y)  #缩放，避免值溢出，也能增加精度
 
     if scale_x == 0 or scale_y == 0:
-        raise ValueError("某一列全部为零，无法计算相关系数")
+        raise ValueError("某一列的值全部相同，无法计算相关系数")
 
-    xs = [x / scale_x for x in xs]
-    ys = [y / scale_y for y in ys]
+    scaled_x = [x / scale_x for x in shifted_x]
+    scaled_y = [y / scale_y for y in shifted_y]
 
-    sum_x = 0.0
-    sum_y = 0.0
-    for i in range(n):
-        sum_x = sum_x + xs[i]
-        sum_y = sum_y + ys[i]    #求和
+    mean_x_scaled = math.fsum(scaled_x) / n  #求平均
+    mean_y_scaled = math.fsum(scaled_y) / n
 
-
-    mean_x = sum_x / n
-    mean_y = sum_y / n    #求平均数
-
-    dx = 0.0
-    dy = 0.0
-    prod = 0.0
-    for i in range(n):
-        a = xs[i] - mean_x
-        b = ys[i] - mean_y   #求偏差
-        dx = dx + a * a    
-        dy = dy + b * b
-        prod = prod + a * b  #分子
     
-    denom = math.sqrt(dx) * math.sqrt(dy)  #分开开根号，避免中间过程值过大
-    r = prod / denom
-    return n, mean_x * scale_x, mean_y * scale_y, r  #还原大小
+    centered_x = [x - mean_x_scaled for x in scaled_x]  #求偏差
+    centered_y = [y - mean_y_scaled for y in scaled_y]
 
+    
+    dx = math.fsum(a * a for a in centered_x)  #求分子
+    dy = math.fsum(b * b for b in centered_y)
+    prod = math.fsum(
+        centered_x[i] * centered_y[i] for i in range(n)
+    )
+
+    if dx == 0 or dy == 0:
+        raise ValueError("某一列的方差为零，无法计算相关系数")
+
+    denom = math.sqrt(dx) * math.sqrt(dy) #求分母
+    r = prod / denom
+
+    
+    mean_x = offset_x + mean_x_scaled * scale_x  #还原平均值
+    mean_y = offset_y + mean_y_scaled * scale_y
+
+    return n, mean_x, mean_y, r
 
 try:
     n, mean_x, mean_y, r = calculate_correlation(xs, ys)
