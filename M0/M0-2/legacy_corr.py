@@ -18,31 +18,35 @@ with open(csv_path) as f:
     reader = csv.DictReader(f)
     for row in reader:
         xs.append(float(row[col_x]))
-        ys.append(float(row[col_y]))
+        ys.append(float(row[col_y]))  
 
-n = len(xs)
+n = len(xs)    #以上为读取数据模块
 
-sum_x = 0.0
-sum_y = 0.0
-for i in range(n):
-    sum_x = sum_x + xs[i]
-    sum_y = sum_y + ys[i]
+def calculate_correlation(xs,ys,);
+    n = len(xs)
+    sum_x = 0.0
+    sum_y = 0.0
+    for i in range(n):
+        sum_x = sum_x + xs[i]
+        sum_y = sum_y + ys[i]    #求和
 
-mean_x = sum_x / n
-mean_y = sum_y / n
 
-dx = 0.0
-dy = 0.0
-prod = 0.0
-for i in range(n):
-    a = xs[i] - mean_x
-    b = ys[i] - mean_y
-    dx = dx + a * a
-    dy = dy + b * b
-    prod = prod + a * b
+    mean_x = sum_x / n
+    mean_y = sum_y / n    #求平均数
 
-denom = dx * dy
-r = prod / denom
+    dx = 0.0
+    dy = 0.0
+    prod = 0.0
+    for i in range(n):
+        a = xs[i] - mean_x
+        b = ys[i] - mean_y   #求偏差
+        dx = dx + a * a    
+        dy = dy + b * b
+        prod = prod + a * b  #分子
+
+    denom = math.sqrt(dx * dy)  #原式忘记开方
+    r = prod / denom
+    return r
 
 print("n =", n)
 print("mean_x =", mean_x)
