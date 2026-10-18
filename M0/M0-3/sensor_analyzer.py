@@ -38,19 +38,21 @@ for v in data:
 std = math.sqrt(acc / len(data))
 
 # --- 剔除离群值 ---
-for v in data:
+for t, v in zip(times, data):
     if abs(v - mean) <= 2 * std:
-        cleaned.append(v)
+        cleaned.append((t, v))
 
         
 
 # --- 输出清洗后的数据 ---
-output_path = os.path.join("/", OUTPUT_DIR, OUTPUT_FILE)
+output_path = OUTPUT_FILE
 f = open(output_path, "w")
 writer = csv.writer(f)
 writer.writerow(["time", "value"])
-for v in cleaned:
-    writer.writerow([v])
+for t, v in cleaned:
+    writer.writerow([t, v])
+
+f.close()
 
 print("均值 mean = %.4f" % mean)
 print("标准差 std = %.4f" % std)
