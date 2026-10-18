@@ -33,14 +33,16 @@ mean = total / len(data)
 # --- 计算标准差 ---
 acc = 0
 for v in data:
-    acc += (v - meam)**2
+    acc += (v - mean)**2
 
 std = math.sqrt(acc / len(data))
 
 # --- 剔除离群值 ---
 for v in data:
-    if v > mean + 2 * std:
-        data.remove(v)
+    if abs(v - mean) <= 2 * std:
+        cleaned.append(v)
+
+        
 
 # --- 输出清洗后的数据 ---
 output_path = os.path.join("/", OUTPUT_DIR, OUTPUT_FILE)
