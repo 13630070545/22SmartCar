@@ -28,6 +28,10 @@ M0/M0-2/
 
 以下命令使用本项目开发时已有的虚拟环境，假设仓库位于 `~/22SmartCar`：
 
+
+同步本地文件 cd ~/22SmartCar
+git pull --ff-only origin main
+
 ```bash
 # 进入虚拟环境
 source ~/smartcar-practice/.venv/bin/activate
